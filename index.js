@@ -1,17 +1,21 @@
 const express = require('express');
 const exphbr = require('express-handlebars');
-const moongoose = require('mongoose');
+const mongoose = require('mongoose');
 
 const app = express();
 
 // Connect to mongoose
-moongoose
+mongoose
   .connect('mongodb://localhost/ideas-dev', {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => console.log('MongoDB Connected successfully ...'))
   .catch((error) => console.log(error.message));
+
+// Load Idea Model
+require('./models/Idea');
+const Idea = mongoose.model('ideas');
 
 // Handlebars Middleware
 app.engine(
@@ -33,6 +37,11 @@ app.get('/', (req, res) => {
 // About Route
 app.get('/about', (req, res) => {
   res.render('about');
+});
+
+// Ad Idea Form
+app.get('/ideas/add', (req, res) => {
+  res.render('ideas/add');
 });
 
 const _PORT = 5000;
