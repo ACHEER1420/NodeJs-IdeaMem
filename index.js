@@ -1,5 +1,6 @@
 const express = require('express');
 const exphbr = require('express-handlebars');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const app = express();
@@ -26,6 +27,10 @@ app.engine(
 );
 app.set('view engine', 'handlebars');
 
+// Body parser middleware
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+
 // Index Route
 app.get('/', (req, res) => {
   const title = 'Welcome to Index Handlebars';
@@ -39,9 +44,40 @@ app.get('/about', (req, res) => {
   res.render('about');
 });
 
-// Ad Idea Form
+// Add Idea Form
 app.get('/ideas/add', (req, res) => {
   res.render('ideas/add');
+});
+
+// Process Form
+app.post('/ideas', (req, res) => {
+  let errors = [];
+
+  const title = req.body.title;
+  const details = req.body.details;
+
+  if (!title) {
+    errors.push({ text: 'Please add a title' });
+  }
+  if (!details) {
+    errors.push({ text: 'Please add some details' });
+  }
+
+  if (errors.length > 0) {
+    res.render('ideas/add', {
+      errors,
+      title,
+      details,
+    });
+  } else {
+    const newIdea = {
+      title,
+      details,
+    };
+    new Idea(newIdea).save().then((idea) => {
+      res.redirect('/ideas');
+    });
+  }
 });
 
 const _PORT = 5000;
