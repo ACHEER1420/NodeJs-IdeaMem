@@ -1,0 +1,23 @@
+{
+  "name": "IdeaMem",
+  "version": "1.0.0",
+  "description": "This is the first basic NodeJs project called Vidjot, used to lecture ideas and descriptions, has login-logout authentication",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Node.js",
+    "Handlebars.js",
+    "express.js",
+    "mongoDB",
+    "mongoose",
+    "mongoDBAtlas",
+    "Heroku"
+  ],
+  "author": "NUTT CHOKWITTAYA",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
