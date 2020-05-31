@@ -1,6 +1,17 @@
 const express = require('express');
-const app = express();
 const exphbr = require('express-handlebars');
+const moongoose = require('mongoose');
+
+const app = express();
+
+// Connect to mongoose
+moongoose
+  .connect('mongodb://localhost/ideas-dev', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log('MongoDB Connected successfully ...'))
+  .catch((error) => console.log(error.message));
 
 // Handlebars Middleware
 app.engine(
@@ -13,7 +24,7 @@ app.set('view engine', 'handlebars');
 
 // Index Route
 app.get('/', (req, res) => {
-  const title = 'Welcome to Index Handlebars'
+  const title = 'Welcome to Index Handlebars';
   res.render('index', {
     title: title,
   });
