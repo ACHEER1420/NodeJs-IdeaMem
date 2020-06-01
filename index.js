@@ -107,6 +107,18 @@ app.put('/ideas/:id', async (req, res) => {
   if (updatedIdea) res.redirect('/ideas');
 });
 
+// Process Delete Item Form Route
+app.delete('/ideas/:id', async (req, res) => {
+  const id = req.params.id;
+  Idea.findByIdAndRemove(id)
+    .then(() => {
+      res.redirect('/ideas');
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+});
+
 // Ideas page Route
 app.get('/ideas', async (req, res) => {
   // Idea.find({})
