@@ -1,8 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const exphbr = require('express-handlebars');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
+const flash = require('connect-flash');
+const session = require('express-session');
 
 const app = express();
 
@@ -35,6 +38,26 @@ app.use(bodyParser.json());
 // MethodOverride middleware
 app.use(methodOverride('_method'));
 
+// Express-session middleware
+app.use(
+  session({
+    secret: process.env.secret,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
+
+// Connect-flash middleware
+app.use(flash());
+
+// Global variables
+app.use(function (req, res, next) {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  res.locals.error = req.flash('error');
+  next();
+});
+
 // Index Page Route
 app.get('/', (req, res) => {
   const title = 'Welcome to Index Handlebars';
@@ -48,16 +71,40 @@ app.get('/about', (req, res) => {
   res.render('about');
 });
 
-// Add Idea Form page
+// Add Idea Form Page Route
 app.get('/ideas/add', (req, res) => {
   res.render('ideas/add');
 });
 
-// Edit Idea item Form Route
+// Edit Idea item Form Page Route
 app.get('/ideas/edit/:id', async (req, res) => {
-  const idea = await (await Idea.findById(req.params.id)).toJSON();
-  res.render('ideas/edit', {
-    idea,
+  try {
+    const idea = await (await Idea.findById(req.params.id)).toJSON();
+    res.render('ideas/edit', {
+      idea,
+    });
+  } catch (error) {
+    req.flash('error_msg', error.message);
+  }
+});
+
+// Ideas Page Route
+app.get('/ideas', async (req, res) => {
+  // Idea.find({})
+  //   .sort({ date: 'desc' })
+  //   .then((ideas) => {
+  //     res.render('ideas/index', {
+  //       ideas: ideas.map((idea) => idea.toJSON()),
+  //     });
+  //   });
+
+  const ideas = await Idea.find({});
+  if (!ideas) return;
+  ideas.sort((a, b) => a.data - b.date);
+  const ideaJSON = ideas.map((idea) => idea.toJSON());
+
+  res.render('ideas/index', {
+    ideas: ideaJSON,
   });
 });
 
@@ -87,6 +134,7 @@ app.post('/ideas', (req, res) => {
       details,
     };
     new Idea(newIdea).save().then((idea) => {
+      req.flash('success_msg', 'Successfully add new item');
       res.redirect('/ideas');
     });
   }
@@ -101,10 +149,17 @@ app.put('/ideas/:id', async (req, res) => {
     title,
     details,
   };
-  const updatedIdea = await Idea.findByIdAndUpdate(id, update, {
-    new: true,
-  });
-  if (updatedIdea) res.redirect('/ideas');
+  try {
+    const updatedIdea = await Idea.findByIdAndUpdate(id, update, {
+      new: true,
+    });
+    if (updatedIdea) {
+      req.flash('success_msg', 'Successfully update item');
+      res.redirect('/ideas');
+    }
+  } catch (error) {
+    req.flash('error_msg', error.message);
+  }
 });
 
 // Process Delete Item Form Route
@@ -112,31 +167,13 @@ app.delete('/ideas/:id', async (req, res) => {
   const id = req.params.id;
   Idea.findByIdAndRemove(id)
     .then(() => {
+      req.flash('success_msg', 'Item removed');
       res.redirect('/ideas');
     })
     .catch((error) => {
+      req.flash('error_msg', error.message);
       console.log(error);
     });
-});
-
-// Ideas page Route
-app.get('/ideas', async (req, res) => {
-  // Idea.find({})
-  //   .sort({ date: 'desc' })
-  //   .then((ideas) => {
-  //     res.render('ideas/index', {
-  //       ideas: ideas.map((idea) => idea.toJSON()),
-  //     });
-  //   });
-
-  const ideas = await Idea.find({});
-  if (!ideas) return;
-  ideas.sort((a, b) => a.data - b.date);
-  const ideaJSON = ideas.map((idea) => idea.toJSON());
-
-  res.render('ideas/index', {
-    ideas: ideaJSON,
-  });
 });
 
 const _PORT = 5000;
