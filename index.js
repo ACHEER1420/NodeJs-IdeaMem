@@ -31,7 +31,7 @@ app.set('view engine', 'handlebars');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// Index Route
+// Index Page Route
 app.get('/', (req, res) => {
   const title = 'Welcome to Index Handlebars';
   res.render('index', {
@@ -39,17 +39,17 @@ app.get('/', (req, res) => {
   });
 });
 
-// About Route
+// About Page Route
 app.get('/about', (req, res) => {
   res.render('about');
 });
 
-// Add Idea Form
+// Add Idea Form page
 app.get('/ideas/add', (req, res) => {
   res.render('ideas/add');
 });
 
-// Process Form
+// Process Add Idea Form Route
 app.post('/ideas', (req, res) => {
   let errors = [];
 
@@ -78,6 +78,25 @@ app.post('/ideas', (req, res) => {
       res.redirect('/ideas');
     });
   }
+});
+
+app.get('/ideas', async (req, res) => {
+  // Idea.find({})
+  //   .sort({ date: 'desc' })
+  //   .then((ideas) => {
+  //     res.render('ideas/index', {
+  //       ideas: ideas.map((idea) => idea.toJSON()),
+  //     });
+  //   });
+
+  const ideas = await Idea.find({});
+  if (!ideas) return;
+  ideas.sort((a, b) => a.data - b.date);
+  const ideaJSON = ideas.map((idea) => idea.toJSON());
+
+  res.render('ideas/index', {
+    ideas: ideaJSON,
+  });
 });
 
 const _PORT = 5000;
