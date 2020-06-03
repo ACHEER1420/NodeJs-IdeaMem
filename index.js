@@ -14,9 +14,15 @@ const app = express();
 const ideasRoutes = require('./src/routes/ideas.routes');
 const usersRoutes = require('./src/routes/users.routes');
 
+// Passport config
+require('./src/config/passport')(passport);
+
+// DB Config
+const db = require('./src/config/database');
+
 // Connect to mongoose
 mongoose
-  .connect('mongodb://localhost/ideas-dev', {
+  .connect(db, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -84,10 +90,7 @@ app.get('/about', (req, res) => {
 app.use('/ideas', ideasRoutes);
 app.use('/users', usersRoutes);
 
-// Passport config
-require('./src/config/passport')(passport);
-
-const _PORT = 5000;
+const _PORT = process.env.PORT || 5000;
 
 app.listen(_PORT, () => {
   console.log(`Server started on PORT ${_PORT}`);
