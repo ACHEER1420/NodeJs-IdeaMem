@@ -3,16 +3,16 @@ const express = require('express');
 const path = require('path');
 const exphbr = require('express-handlebars');
 const bodyParser = require('body-parser');
+const passport = require('passport');
 const mongoose = require('mongoose');
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const session = require('express-session');
-
 const app = express();
 
 // Load routes
-const ideasRoutes = require('./routes/ideas.routes');
-const usersRoutes = require('./routes/users.routes');
+const ideasRoutes = require('./src/routes/ideas.routes');
+const usersRoutes = require('./src/routes/users.routes');
 
 // Connect to mongoose
 mongoose
@@ -51,6 +51,10 @@ app.use(
   })
 );
 
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Connect-flash middleware
 app.use(flash());
 
@@ -59,6 +63,7 @@ app.use(function (req, res, next) {
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');
   res.locals.error = req.flash('error');
+  res.locals.user = req.user || null;
   next();
 });
 
@@ -78,6 +83,9 @@ app.get('/about', (req, res) => {
 // Use routes
 app.use('/ideas', ideasRoutes);
 app.use('/users', usersRoutes);
+
+// Passport config
+require('./src/config/passport')(passport);
 
 const _PORT = 5000;
 

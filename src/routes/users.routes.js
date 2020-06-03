@@ -18,6 +18,15 @@ router.get('/register', (req, res) => {
   res.render('users/register');
 });
 
+// Handle Login Form Route
+router.post('/login', (req, res, next) => {
+  passport.authenticate('local', {
+    successRedirect: '/ideas',
+    failureRedirect: '/users/login',
+    failureFlash: true,
+  })(req, res, next);
+});
+
 // Handle User Register Route
 router.post('/register', async (req, res) => {
   let errors = [];
@@ -32,7 +41,7 @@ router.post('/register', async (req, res) => {
 
   const isEmailExisted = await UserModel.findOne({ email: req.body.email });
   if (isEmailExisted) {
-    errors.push({text: 'Email is already existed'})
+    errors.push({ text: 'Email is already existed' });
   }
 
   if (errors.length > 0) {
@@ -50,6 +59,7 @@ router.post('/register', async (req, res) => {
       password: req.body.password,
     });
 
+    // bcrypt the password
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(newUser.password, salt, (err, hash) => {
         if (err) throw err;
@@ -67,6 +77,13 @@ router.post('/register', async (req, res) => {
       });
     });
   }
+});
+
+// Handle User Logout Route
+router.get('/logout', (req, res) => {
+  req.logout();
+  req.flash('success_msg', 'You are successfully logged out');
+  res.redirect('/users/login');
 });
 
 module.exports = router;

@@ -1,14 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
-
+const { routeGuard } = require('../helper/auth');
 
 // Load Idea Model
 require('../models/Idea');
 const Idea = mongoose.model('ideas');
 
 // Ideas Page Route
-router.get('/', async (req, res) => {
+router.get('/', routeGuard, async (req, res) => {
   // Idea.find({})
   //   .sort({ date: 'desc' })
   //   .then((ideas) => {
@@ -28,12 +28,12 @@ router.get('/', async (req, res) => {
 });
 
 // Add Idea Form Page Route
-router.get('/add', (req, res) => {
+router.get('/add', routeGuard, (req, res) => {
   res.render('ideas/add');
 });
 
 // Edit Idea item Form Page Route
-router.get('/edit/:id', async (req, res) => {
+router.get('/edit/:id', routeGuard, async (req, res) => {
   try {
     const idea = await (await Idea.findById(req.params.id)).toJSON();
     res.render('ideas/edit', {
@@ -45,7 +45,7 @@ router.get('/edit/:id', async (req, res) => {
 });
 
 // Process Add Idea Form Route
-router.post('/', (req, res) => {
+router.post('/', routeGuard, (req, res) => {
   let errors = [];
 
   const title = req.body.title;
@@ -77,7 +77,7 @@ router.post('/', (req, res) => {
 });
 
 // Process Edit Item Form Route
-router.put('/:id', async (req, res) => {
+router.put('/:id', routeGuard, async (req, res) => {
   const title = req.body.title;
   const details = req.body.details;
   const id = req.params.id;
@@ -99,7 +99,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Process Delete Item Form Route
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', routeGuard, async (req, res) => {
   const id = req.params.id;
   Idea.findByIdAndRemove(id)
     .then(() => {
