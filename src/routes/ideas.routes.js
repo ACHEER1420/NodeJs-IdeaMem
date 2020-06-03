@@ -17,13 +17,14 @@ router.get('/', routeGuard, async (req, res) => {
   //     });
   //   });
 
-  const ideas = await Idea.find({});
+  const ideas = await Idea.find({
+    user: req.user.id,
+  }).lean();
   if (!ideas) return;
   ideas.sort((a, b) => a.data - b.date);
-  const ideaJSON = ideas.map((idea) => idea.toJSON());
 
   res.render('ideas/index', {
-    ideas: ideaJSON,
+    ideas
   });
 });
 
@@ -33,15 +34,20 @@ router.get('/add', routeGuard, (req, res) => {
 });
 
 // Edit Idea item Form Page Route
-router.get('/edit/:id', routeGuard, async (req, res) => {
-  try {
-    const idea = await (await Idea.findById(req.params.id)).toJSON();
-    res.render('ideas/edit', {
-      idea,
-    });
-  } catch (error) {
-    req.flash('error_msg', error.message);
-  }
+router.get('/edit/:id', routeGuard, (req, res) => {
+  Idea.findOne({ _id: req.params.id })
+    .lean()
+    .then((idea) => {
+      if (idea.user !== req.user.id) {
+        req.flash('error_msg', 'Not Authorized');
+        res.redirect('/ideas');
+      } else {
+        res.render('ideas/edit', {
+          idea: idea,
+        });
+      }
+    })
+    .catch((error) => {});
 });
 
 // Process Add Idea Form Route
@@ -68,6 +74,7 @@ router.post('/', routeGuard, (req, res) => {
     const newIdea = {
       title,
       details,
+      user: req.user.id,
     };
     new Idea(newIdea).save().then((idea) => {
       req.flash('success_msg', 'Successfully add new item');
