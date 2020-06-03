@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const exphbr = require('express-handlebars');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -9,6 +10,10 @@ const session = require('express-session');
 
 const app = express();
 
+// Load routes
+const ideasRoutes = require('./routes/ideas.routes');
+const usersRoutes = require('./routes/users.routes');
+
 // Connect to mongoose
 mongoose
   .connect('mongodb://localhost/ideas-dev', {
@@ -17,10 +22,6 @@ mongoose
   })
   .then(() => console.log('MongoDB Connected successfully ...'))
   .catch((error) => console.log(error.message));
-
-// Load Idea Model
-require('./models/Idea');
-const Idea = mongoose.model('ideas');
 
 // Handlebars Middleware
 app.engine(
@@ -34,6 +35,9 @@ app.set('view engine', 'handlebars');
 // Body parser middleware
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+// Static folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 // MethodOverride middleware
 app.use(methodOverride('_method'));
@@ -71,110 +75,9 @@ app.get('/about', (req, res) => {
   res.render('about');
 });
 
-// Add Idea Form Page Route
-app.get('/ideas/add', (req, res) => {
-  res.render('ideas/add');
-});
-
-// Edit Idea item Form Page Route
-app.get('/ideas/edit/:id', async (req, res) => {
-  try {
-    const idea = await (await Idea.findById(req.params.id)).toJSON();
-    res.render('ideas/edit', {
-      idea,
-    });
-  } catch (error) {
-    req.flash('error_msg', error.message);
-  }
-});
-
-// Ideas Page Route
-app.get('/ideas', async (req, res) => {
-  // Idea.find({})
-  //   .sort({ date: 'desc' })
-  //   .then((ideas) => {
-  //     res.render('ideas/index', {
-  //       ideas: ideas.map((idea) => idea.toJSON()),
-  //     });
-  //   });
-
-  const ideas = await Idea.find({});
-  if (!ideas) return;
-  ideas.sort((a, b) => a.data - b.date);
-  const ideaJSON = ideas.map((idea) => idea.toJSON());
-
-  res.render('ideas/index', {
-    ideas: ideaJSON,
-  });
-});
-
-// Process Add Idea Form Route
-app.post('/ideas', (req, res) => {
-  let errors = [];
-
-  const title = req.body.title;
-  const details = req.body.details;
-
-  if (!title) {
-    errors.push({ text: 'Please add a title' });
-  }
-  if (!details) {
-    errors.push({ text: 'Please add some details' });
-  }
-
-  if (errors.length > 0) {
-    res.render('ideas/add', {
-      errors,
-      title,
-      details,
-    });
-  } else {
-    const newIdea = {
-      title,
-      details,
-    };
-    new Idea(newIdea).save().then((idea) => {
-      req.flash('success_msg', 'Successfully add new item');
-      res.redirect('/ideas');
-    });
-  }
-});
-
-// Process Edit Item Form Route
-app.put('/ideas/:id', async (req, res) => {
-  const title = req.body.title;
-  const details = req.body.details;
-  const id = req.params.id;
-  const update = {
-    title,
-    details,
-  };
-  try {
-    const updatedIdea = await Idea.findByIdAndUpdate(id, update, {
-      new: true,
-    });
-    if (updatedIdea) {
-      req.flash('success_msg', 'Successfully update item');
-      res.redirect('/ideas');
-    }
-  } catch (error) {
-    req.flash('error_msg', error.message);
-  }
-});
-
-// Process Delete Item Form Route
-app.delete('/ideas/:id', async (req, res) => {
-  const id = req.params.id;
-  Idea.findByIdAndRemove(id)
-    .then(() => {
-      req.flash('success_msg', 'Item removed');
-      res.redirect('/ideas');
-    })
-    .catch((error) => {
-      req.flash('error_msg', error.message);
-      console.log(error);
-    });
-});
+// Use routes
+app.use('/ideas', ideasRoutes);
+app.use('/users', usersRoutes);
 
 const _PORT = 5000;
 
