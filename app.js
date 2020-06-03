@@ -22,7 +22,7 @@ const db = require('./src/config/database');
 
 // Connect to mongoose
 mongoose
-  .connect(db, {
+  .connect(process.env.db_prod, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
